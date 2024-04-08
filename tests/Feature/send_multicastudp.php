@@ -1,7 +1,7 @@
 <?php
 
-$multicastAddress = '228.0.0.1'; // Multicast address
-$port = 50076; // UDP port
+$multicastAddress = '192.168.1.12'; // Multicast address
+$port = 8002; // UDP port
 
 function sendMulticastUDPPacket($address, $port) {
     // Generate random data within the specified range
