@@ -34,7 +34,7 @@ window.onload = function() {
             <tbody id="sensorDataBody" >
                 <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <td class="px-6 py-4">
-                <h5 class="card-title">Add Sensor</h5>
+                <h1 class="card-title">Add Sensor</h1>
                 <form method="POST" action="{{ route('editsensors.store') }}">
                         @csrf
                         <input type="hidden" name="action" value="addsensor">
@@ -58,8 +58,8 @@ window.onload = function() {
                 <h5 class="card-title">Delete Sensor</h5>
                     <form method="POST" action="{{ route('editsensors.store') }}">
                         @csrf
-                        @method('DELETE')
-                        <input type="hidden" name="action" value="delete">
+                       
+                        <input type="hidden" name="action" value="destroy">
 
                         <div class="form-group">
                             <label for="delete-id">Sensor ID to delete</label>

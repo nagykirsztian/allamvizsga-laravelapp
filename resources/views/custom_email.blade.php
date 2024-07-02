@@ -17,7 +17,6 @@
         <li><strong>Threshold Type:</strong> {{ $data['thresholdType'] }}</li>
     </ul>
     
-    <p>Thank you,</p>
-    <p>Your Application Team</p>
+   
 </body>
 </html>

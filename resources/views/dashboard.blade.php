@@ -16,7 +16,7 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [...Array(100).keys()].map(num => num + 1),
+                labels: [...Array(20).keys()].map(num => num + 1),
                 datasets: [{
                     label: 'Sensor Data',
                     data: values,
@@ -133,15 +133,13 @@
                     row += '<td class="px-6 py-4">' + data.min + '</td>'; // Display min value
                     row += '<td class="px-6 py-4">' + data.max + '</td>'; // Display max value
                     // Create chart canvas element
-                    
                     var canvasId = 'chart_' + data.id;
                     row += '<td><canvas id="' + canvasId + '" width="800" height="200"></canvas></td>';
-
                     row += '</tr>';
                     $('#sensorDataBody').append(row);
 
                     // Draw chart for the current sensor
-                    var values = data.values.slice(-100);
+                    var values = data.values.slice(-20);
                     drawChart(canvasId, values);
 
                     // Check thresholds for the current sensor data
@@ -170,10 +168,7 @@
         </script>
     <style>
 
-    .max-w-7xl {
-        max-width: 80rem !important;
-    }
-    
+
             </style>
     </head>
 
@@ -185,17 +180,16 @@
         </x-slot>
 
         <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8"> 
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6 text-gray-900 dark:text-gray-100">  
-                            
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8"> 
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6 text-gray-900 dark:text-gray-100">  
                 
 
-    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
     <input type="hidden" id="csrf-token" value="{{ csrf_token() }}">
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                <tr>
+                <tr> 
                 
                     <th scope="col" class="px-6 py-3">
                         ID

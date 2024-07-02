@@ -58,6 +58,9 @@ use App\Config;
 //                     $id = $matches[1];
 //                     $value = $matches[2];
 
+//                     // Get the current timestamp
+//                     $timestamp = now()->timestamp;
+
 //                     // Store or update data in MongoDB using the Post model
 //                     $post = Post::where('id', $id)->first(); // Check if data with the ID exists
 
@@ -65,6 +68,10 @@ use App\Config;
 //                         // If data with the ID exists, update the value
 //                         $values = $post->values ?: [];
 //                         $values[] = $value;
+
+//                         $updates = $post->updates ?: [];
+//                         $updates[] = $timestamp;
+
 //                         $post->values = $values;
 //                         $post->value = $value;
 //                         $post->save();
@@ -74,6 +81,8 @@ use App\Config;
 //                             'id' => $id,
 //                             'value' => $value,
 //                             'values' => [$value],
+//                             'timestamp' => $timestamp,
+//                             'updates' => [$timestamp],
 //                             'min' => 0,
 //                             'max' => 100,
 //                         ]);
@@ -100,15 +109,11 @@ class UDPServer extends Command
 {
     protected $signature = 'udp:listen';
     protected $description = 'Starts a UDP server to listen for incoming packets';
-    protected $stopServer = false;
-
     public function handle()
 {
 
-    // pcntl_signal(SIGINT, [$this, 'handleSignal']);
-    // pcntl_signal(SIGTERM, [$this, 'handleSignal']);
     // Server configuration
-    $serverAddress = '192.168.1.10'; // Your server's IP address
+    $serverAddress = '192.168.1.5'; // Your server's IP address
     $serverPorts = config('udp.server_ports'); // Ports for each sensor
 
     // Create and bind sockets for each sensor
@@ -132,7 +137,17 @@ class UDPServer extends Command
 
     while (true) {
         // Loop through each socket and check for incoming data
-        foreach ($sockets as $port => $socket) {
+        $readSockets = array_values($sockets);
+            $write = null;
+            $except = null;
+            $timeout = null; // Wait indefinitely
+
+
+            if (socket_select($readSockets, $write, $except, $timeout) === false) {
+                $this->error("socket_select() failed: reason: " . socket_strerror(socket_last_error()));
+                break;
+            }
+            foreach ($readSockets as $socket) {
             $data = '';
             $clientIP = '';
             $clientPort = 0;
@@ -144,8 +159,12 @@ class UDPServer extends Command
 
                 // Check if the received data matches the expected format
                 if (preg_match('/^\[(\d{2});(\d{1,2}\.\d{2}E-04);S0\]$/', $data, $matches)) {
-                                       $id = $matches[1];
-                                        $value = $matches[2];
+                    $id = $matches[1];
+                    $value = $matches[2];
+
+                    //Get the current timestamp
+                    $timestamp = now()->timestamp;
+
                     // Store or update data in MongoDB using the Post model
                     $post = Post::where('id', $id)->first(); // Check if data with the ID exists
 
@@ -155,10 +174,13 @@ class UDPServer extends Command
                         $values[] = $value;
                         $post->values = $values;
 
+                        $updates = $post->updates ?: [];
+                        $updates[] = $timestamp;   
                         // Update the current value
                         $post->value = $value;
                         $post->location = 0; // Set the location
-
+                        $post->timestamp = $timestamp;
+                        $post->updates = $updates;
                         $post->save();
                     } else {
                         // If data with the ID doesn't exist, create a new entry
@@ -166,12 +188,74 @@ class UDPServer extends Command
                             'id' => $id,
                             'value' => $value,
                             'values' => [$value],
+                            'timestamp' => $timestamp,
+                            'updates' => [$timestamp],
                             'min' => 0,
                             'max' => 100,
                             'location' => 0, // Set the location
                         ]);
                     }
-                } else {
+                }
+                elseif (preg_match('/^\[(\d{3});B\+(\d+\.\d+);B\+(\d+\.\d+);B\+(\d+\.\d+);B\+(\d+);S\d;C\d+;\d\]$/', $data, $matches)) {
+                    $id = $matches[1];
+                    $valueA = $matches[2];
+                    $valueB = $matches[3];
+                    $valueC = $matches[4];
+            
+                    // Get the current timestamp
+                    $timestamp = now()->timestamp;
+            
+                    // Store or update data for 111A
+                    saveData($id . 'A', $valueA, $timestamp);
+            
+                    // Store or update data for 111B
+                    saveData($id . 'B', $valueB, $timestamp);
+            
+                    // Store or update data for 111C
+                    saveData($id . 'C', $valueC, $timestamp);
+                } 
+                
+                // Check if the received data matches the expected format
+                elseif (preg_match('/^\[(\d{2});(\d{1,2}\.\d{2}E-05);S0\]$/', $data, $matches)) {
+                    $id = $matches[1];
+                    $value = $matches[2];
+            
+                    // Get the current timestamp
+                    $timestamp = now()->timestamp;
+            
+                    // Store or update data in MongoDB using the Post model
+                    $post = Post::where('id', $id)->first(); // Check if data with the ID exists
+            
+                    if ($post) {
+                        // If data with the ID exists, update the value
+                        $values = $post->values ?: [];
+                        $values[] = $value;
+                        $post->values = $values;
+            
+                        $updates = $post->updates ?: [];
+                        $updates[] = $timestamp;
+                        // Update the current value
+                        $post->value = $value;
+                        $post->location = 2; // Set the location
+                        $post->timestamp = $timestamp;
+                        $post->updates = $updates;
+                        $post->save();
+                    } else {
+                        // If data with the ID doesn't exist, create a new entry
+                        Post::create([
+                            'id' => $id,
+                            'value' => $value,
+                            'values' => [$value],
+                            'timestamp' => $timestamp,
+                            'updates' => [$timestamp],
+                            'min' => 0,
+                            'max' => 100,
+                            'location' => 2, // Set the location
+                        ]);
+                    }
+                }
+                    
+                else {
                     $this->error("Received data does not match the expected format: $data");
                 }
             }
@@ -184,11 +268,46 @@ class UDPServer extends Command
     }
 }
 
-// public function handleSignal($signal)
-//     {
-//         $this->info('Received signal to stop server.');
-//         $this->stopServer = true;
-//     }
 
  }
 
+ /**
+ * Save or update data in the database
+ *
+ * @param string $id
+ * @param string $value
+ * @param int $timestamp
+ * @return void
+ */
+function saveData($id, $value, $timestamp) {
+    // Store or update data in MongoDB using the Post model
+    $post = Post::where('id', $id)->first(); // Check if data with the ID exists
+
+    if ($post) {
+        // If data with the ID exists, update the value
+        $values = $post->values ?: [];
+        $values[] = $value;
+        $post->values = $values;
+
+        $updates = $post->updates ?: [];
+        $updates[] = $timestamp;
+        // Update the current value
+        $post->value = $value;
+        $post->location = 1; // Set the location
+        $post->timestamp = $timestamp;
+        $post->updates = $updates;
+        $post->save();
+    } else {
+        // If data with the ID doesn't exist, create a new entry
+        Post::create([
+            'id' => $id,
+            'value' => $value,
+            'values' => [$value],
+            'timestamp' => $timestamp,
+            'updates' => [$timestamp],
+            'min' => 0,
+            'max' => 100,
+            'location' => 1, // Set the location
+        ]);
+    }
+}

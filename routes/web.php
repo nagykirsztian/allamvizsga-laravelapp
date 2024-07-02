@@ -55,6 +55,8 @@ Route::get('/sensor-data', function () {
     return view('sensor-data')->with('sensorData', $sensorData);
 });
 
+Route::get('/sensor/downloadAll', [SensorController::class, 'downloadAll'])->name('sensor.downloadAll');
+Route::get('/sensor/downloadByDate', [SensorController::class, 'downloadByDate'])->name('sensor.downloadByDate');
 
 Route::post('/save-alert-data', 'App\Http\Controllers\SensorController@saveAlertData');
 

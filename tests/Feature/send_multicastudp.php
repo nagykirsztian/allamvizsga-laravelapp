@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 $multicastAddress = '192.168.1.12'; // Multicast address
 $port = 8002; // UDP port
@@ -32,4 +32,6 @@ function sendMulticastUDPPacket($address, $port) {
 while (true) {
     sendMulticastUDPPacket($multicastAddress, $port);
     sleep(4); // Wait for 4 seconds before sending the next packet
-}
+} 
+
+

@@ -9,6 +9,6 @@ class Post extends Model
 {
 
     protected $connection = 'mongodb';
-    protected $fillable = ['id', 'value', 'values', 'min', 'max', 'location', 'port'];
+    protected $fillable = ['id', 'value', 'values', 'min', 'max', 'location', 'port', 'timestamp', 'updates'];
 
 }

@@ -60,8 +60,8 @@ class SensorController extends Controller
         }
         
         // Send email notifications
-        $mailController = new MailController();
-        $mailController->sendEmailWithData($newData); // Call the function from MailController
+        // $mailController = new MailController();
+        // $mailController->sendEmailWithData($newData); // Call the function from MailController
 
         return response()->json(['message' => 'Alert data saved successfully']);
     } catch (\Exception $e) {
@@ -73,6 +73,34 @@ class SensorController extends Controller
     }
 }
 
+public function downloadAll(Request $request)
+    {
+        $sensorId = $request->input('sensor_id');
+
+        $data = Post::where('id', $sensorId)->get();
+
+        return response()->json($data)
+                         ->header('Content-Disposition', 'attachment; filename="sensor_data_all.json"')
+                         ->header('Content-Type', 'application/json');
+    }
+
+    public function downloadByDate(Request $request)
+    {
+        $sensorId = $request->input('sensor_id');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        $startTimestamp = strtotime($startDate);
+        $endTimestamp = strtotime($endDate);
+
+        $data = Post::where('id', $sensorId)
+                    ->whereBetween('timestamp', [$startTimestamp, $endTimestamp])
+                    ->get();
+
+        return response()->json($data)
+                         ->header('Content-Disposition', 'attachment; filename="sensor_data_date_range.json"')
+                         ->header('Content-Type', 'application/json');
+    }
 
 public function store(Request $request)
     {
@@ -117,14 +145,6 @@ public function store(Request $request)
 
         // Save the configuration to the file
         file_put_contents(config_path('udp.php'), $configPHP);
-
-        // Artisan::call('udp:listen');
-
-        // if (Artisan::output()) {
-        //     Log::info('UDP server restarted successfully after adding a new sensor.');
-        // } else {
-        //     Log::error('Failed to restart UDP server after adding a new sensor.');
-        // }
 
 
         } elseif ($action === 'destroy') {
@@ -183,7 +203,7 @@ public function store(Request $request)
 
         }
 
-        return redirect()->route('editsensors')->with('success', 'Sensor added successfully');
+        return redirect()->route('editsensors')->with('success', 'Edit was successfull');
 
         
     }
